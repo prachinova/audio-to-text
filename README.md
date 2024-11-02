@@ -22,18 +22,7 @@ pyttsx3 (for audio feedback)
 *pip install speechrecognition pyaudio pyttsx3*
 ## Run the Script:
 python audio_to_text.py
-##  Give Voice Input: Speak into the microphone; the script will output the recognized text.
-
-**Example Command**
-After starting the script, say something like:
-
-"Create a button labeled 'Submit'."
-
-The script will transcribe this and display:
-
-Command recognized: Create a button labeled 'Submit'.
-
-
+###  Give Voice Input: Speak into the microphone; the script will output the recognized text.
 ##  Notes
 Microphone Access: Ensure your device has a working microphone.
 
