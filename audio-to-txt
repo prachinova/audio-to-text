@@ -1,0 +1,131 @@
+# Import necessary libraries
+import speech_recognition as sr
+import pyttsx3
+import spacy
+
+# Load spaCy's English language model
+nlp = spacy.load("en_core_web_sm")
+
+# Function to capture voice input and convert it to text
+def listen_for_command():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:  # Access the microphone
+        print("Listening for your command...")
+        
+        recognizer.adjust_for_ambient_noise(source, duration=1)  # Adjust for background noise
+        try:
+            # Listen for the command
+            audio = recognizer.listen(source)
+            print("Recognizing...")
+            # Convert audio to text using Google's Speech Recognition API
+            command = recognizer.recognize_google(audio)
+            print(f"You said: {command}")
+            return command
+        except sr.UnknownValueError:
+            print("Sorry, I didn't catch that. Could you please repeat?")
+            return ""
+        except sr.RequestError:
+            print("Sorry, there was an issue with the Speech Recognition service.")
+            return ""
+
+# Function to interpret the voice command using NLP
+def interpret_command(command):
+    # Analyze the command using spaCy
+    doc = nlp(command.lower())
+
+    # More complex command handling logic
+    if "add" in command:
+        return "add_element", extract_element(command)
+    elif "change" in command:
+        return "modify_element", extract_modification(command)
+    elif "remove" in command:
+        return "remove_element", extract_element(command)
+    elif "make" in command and "responsive" in command:
+        return "make_responsive", None
+    elif "set" in command and "background color" in command:
+        return "set_background_color", extract_color(command)
+    else:
+        return "unknown", None
+
+# Helper function to extract elements from the command
+def extract_element(command):
+    elements = ["button", "image", "text", "heading", "paragraph", "form", "table", "list", "link"]
+    for token in command.split():
+        if token in elements:
+            return token
+    return None
+
+# Helper function to extract modifications from the command
+def extract_modification(command):
+    if "color" in command:
+        return "color", extract_color(command)
+    return None
+
+# Helper function to extract color from the command
+def extract_color(command):
+    colors = ["red", "blue", "green", "black", "white", "yellow", "purple", "orange", "pink"]
+    for token in command.split():
+        if token in colors:
+            return token
+    return "default_color"  # Default color if not specified
+
+# Function to generate the appropriate code based on the action and element
+def generate_code(action, element):
+    code_snippets = {
+        "button": "<button>Click Me</button>",
+        "image": '<img src="image.jpg" alt="Description">',
+        "text": '<p>Sample text here.</p>',
+        "heading": "<h1>Heading 1</h1>",
+        "paragraph": "<p>This is a paragraph.</p>",
+        "form": "<form></form>",
+        "table": "<table><tr><th>Header</th></tr></table>",
+        "list": "<ul><li>List item</li></ul>",
+        "link": '<a href="https://example.com">Click here</a>'
+    }
+    
+    if action == "add_element" and element in code_snippets:
+        print(f"Generating code to add a {element}.")
+        return code_snippets[element]
+    
+    elif action == "modify_element" and element:
+        if element[0] == "color":
+            print(f"Changing color to {element[1]}.")
+            return f"style='color:{element[1]}'"
+    
+    elif action == "remove_element" and element:
+        print(f"Generating code to remove a {element}.")
+        return f"<!-- Code to remove {element} -->"
+    
+    elif action == "make_responsive":
+        print("Making the page responsive.")
+        return "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+    
+    elif action == "set_background_color" and element:
+        print(f"Setting background color to {element}.")
+        return f"body {{ background-color: {element}; }}"
+    
+    else:
+        print("Unknown command.")
+        return ""
+
+# Function to provide audio feedback using text-to-speech
+def give_feedback(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+# Main function to run the voice input and code generation workflow
+if __name__ == "__main__":
+    command = listen_for_command()  # Run the function and listen for input
+    if command:
+        action, details = interpret_command(command)
+        if action != "unknown":
+            give_feedback(f"Performing action: {action} on {details}")
+            generated_code = generate_code(action, details)
+            print("Generated Code:\n", generated_code)
+        else:
+            give_feedback("Sorry, I couldn't understand the command.")
+    else:
+        give_feedback("No command received. Please try again.")
+
+
